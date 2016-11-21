@@ -15,7 +15,12 @@ use yiiunit\data\ar\Customer;
 use yiiunit\data\ar\Order;
 
 /**
- * This trait provides unit tests shared by the different AR implementations
+ * This trait provides unit tests shared by the different AR implementations.
+ *
+ * It is used directly in the unit tests for database active records in `tests/framework/db/ActiveRecordTest.php`
+ * but also used in the test suites of `redis`, `mongodb`, `elasticsearch` and `sphinx` AR implementations
+ * in the extensions.
+ * @see https://github.com/yiisoft/yii2-redis/blob/a920547708c4a7091896923abc2499bc8c1c0a3b/tests/bootstrap.php#L17-L26
  */
 trait ActiveRecordTestTrait
 {
@@ -1228,7 +1233,7 @@ trait ActiveRecordTestTrait
         $this->assertNull($model->name);
 
         // @see https://github.com/yiisoft/yii2-gii/issues/190
-        $baseModel = new ActiveRecord();
+        $baseModel = new $customerClass();
         $this->assertFalse($baseModel->hasProperty('unExistingColumn'));
 
 
@@ -1257,9 +1262,10 @@ trait ActiveRecordTestTrait
 
         try {
 
-            $customer->orderItems = [new Item()];
-            // setter call above MUST throw Exception
-            $this->assertTrue(false);
+            /* @var $itemClass \yii\db\ActiveRecordInterface */
+            $itemClass = $this->getItemClass();
+            $customer->orderItems = [new $itemClass()];
+            $this->fail('setter call above MUST throw Exception');
 
         } catch (\Exception $e) {
             // catch exception "Setting read-only property"
